@@ -1,6 +1,8 @@
 # PyShell
 Less pain bash scripting: safer and more portable.
 
+Works on Python 3.11.
+
 ## Overview
 PyShell is a python library that allows users to write bash scripts in python,
 with almost the same syntax as in a shell script.
