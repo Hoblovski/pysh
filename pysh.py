@@ -5,6 +5,7 @@ import copy
 from enum import Enum, auto
 from typing import Sequence, Union
 
+
 def ensure_path(p: Union[str, pathlib.Path]) -> pathlib.Path:
     if isinstance(p, pathlib.Path):
         return p
@@ -16,12 +17,14 @@ class RedirKind(Enum):
     """Redirection kind for a specific descriptor.
     A redirection is characterized by its kind and associated data, represented
     as a tuple."""
-    NOREDIR = auto()    #
-    NULL = auto()       # >/dev/null ...
-    ERR2OUT = auto()    # 2>&1, ONLY FOR OUR.
-    FILE = auto()       # >f ...
-    PIPE = auto()       # f1 | f2. stored, linked to next command
-    CAPTURE = auto()    # $(f). stored.
+
+    NOREDIR = auto()
+    NULL = auto()
+    ERR2OUT = auto()
+    FILE = auto()
+    PIPE = auto()
+    CAPTURE = auto()
+
 
 class Command:
     def __init__(self, *args, **kwargs):
@@ -30,9 +33,9 @@ class Command:
 
     def init_attr(self):
         self.args = []
-        self.stdin = RedirKind.NOREDIR,
-        self.stdout = RedirKind.NOREDIR,
-        self.stderr = RedirKind.NOREDIR,
+        self.stdin = (RedirKind.NOREDIR,)
+        self.stdout = (RedirKind.NOREDIR,)
+        self.stderr = (RedirKind.NOREDIR,)
         self.pipefrom = None
 
     @staticmethod
@@ -59,54 +62,54 @@ class Command:
         """
         args, kwargs = Command.normalized_args(args, kwargs)
         self.args += args
-        if 'i' in kwargs:
-            assert False # TODO
-        if 'o' in kwargs:
-            assert False # TODO
-        if 'e' in kwargs:
-            assert False # TODO
-        if 'a' in kwargs:
+        if "i" in kwargs:
+            assert False  # TODO
+        if "o" in kwargs:
+            assert False  # TODO
+        if "e" in kwargs:
+            assert False  # TODO
+        if "a" in kwargs:
             assert False
-        if 'oe' in kwargs:
+        if "oe" in kwargs:
             assert False
 
     def subprocess_kwargs(self):
         kwargs = {}
         match self.stdout:
             case RedirKind.NOREDIR:
-                kwargs['stdout'] = None,
+                kwargs["stdout"] = (None,)
             case RedirKind.NULL:
-                kwargs['stdout'] = subprocess.DEVNULL,
+                kwargs["stdout"] = (subprocess.DEVNULL,)
             case RedirKind.ERR2OUT:
                 assert False
             case RedirKind.FILE, path:
-                kwargs['stdout'] = ensure_path(path).open('w')
+                kwargs["stdout"] = ensure_path(path).open("w")
             case RedirKind.PIPE:
                 assert False
             case RedirKind.CAPTURE:
                 assert False
         match self.stderr:
             case RedirKind.NOREDIR:
-                kwargs['stderr'] = None,
+                kwargs["stderr"] = (None,)
             case RedirKind.NULL:
-                kwargs['stderr'] = subprocess.DEVNULL,
+                kwargs["stderr"] = (subprocess.DEVNULL,)
             case RedirKind.ERR2OUT:
-                kwargs['stderr'] = subprocess.STDOUT,
+                kwargs["stderr"] = (subprocess.STDOUT,)
             case RedirKind.FILE, path:
-                kwargs['stderr'] = ensure_path(path).open('w')
+                kwargs["stderr"] = ensure_path(path).open("w")
             case RedirKind.PIPE:
                 assert False
             case RedirKind.CAPTURE:
                 assert False
         match self.stdin:
             case RedirKind.NOREDIR:
-                kwargs['stdin'] = None,
+                kwargs["stdin"] = (None,)
             case RedirKind.NULL:
-                kwargs['stdin'] = subprocess.DEVNULL,
+                kwargs["stdin"] = (subprocess.DEVNULL,)
             case RedirKind.ERR2OUT:
                 assert False
             case RedirKind.FILE, path:
-                kwargs['stdin'] = ensure_path(path).open('r')
+                kwargs["stdin"] = ensure_path(path).open("r")
             case RedirKind.PIPE:
                 assert False
             case RedirKind.CAPTURE:
@@ -118,7 +121,7 @@ class Command:
             return subprocess.Popen(self.args, **kwargs)
         else:
             proc1 = self.pipefrom.popen(stdout=subprocess.PIPE)
-            kwargs['stdin'] = proc1.stdout
+            kwargs["stdin"] = proc1.stdout
             proc2 = subprocess.Popen(self.args, **kwargs)
             proc1.stdout.close()
             # This leaves proc1 unclosed, leaking.
@@ -133,12 +136,14 @@ class Command:
     def __or__(self, cmd):
         # Note: p1 | p2 return p2, henceforth losing any further updates to p1.
         if not isinstance(cmd, Command):
-            raise Exception('Pipelining only happen on process. Likely you missed a parenthesis.')
+            raise Exception(
+                "Pipelining only happen on process. Likely you missed a parenthesis."
+            )
         cmd.pipefrom = self
         return cmd
 
     def __str__(self):
-        return ' '.join(self.args)
+        return " ".join(self.args)
 
     def Exec(self, execarg=None):
         """Use == for command invocation.
@@ -160,8 +165,9 @@ class Command:
                 raise
             retcode = proc.poll()
             if retcode:
-                raise subprocess.CalledProcessError(retcode, proc.args,
-                        output=stdout, stderr=stderr)
+                raise subprocess.CalledProcessError(
+                    retcode, proc.args, output=stdout, stderr=stderr
+                )
 
     def __gt__(self, target):
         # target: None for /dev/null, or str for file name
@@ -179,34 +185,27 @@ class Command:
             self.stdin = RedirKind.FILE, source
         return self
 
+
 def Exec(cmd):
     cmd.Exec()
+
+
 def Exek(cmd):
     # exe and kapture. maybe use better name.
     pass
+
+
 echo = Command("echo")
 sed = Command("sed")
 cat = Command("cat")
-x=echo("hello world")
-y=sed('s/o/O/g')
-z=sed("s/hellO/bye/g")
-#echo("hello world") > 'o.log'                                           ==()
-#echo("hello world") | sed('s/o/O/g')                                    ==()
-
-
-
-
-
-
-
-
-
-
-
+x = echo("hello world")
+y = sed("s/o/O/g")
+z = sed("s/hellO/bye/g")
+# echo("hello world") > 'o.log'                                           ==()
+# echo("hello world") | sed('s/o/O/g')                                    ==()
 
 
 print("Writing to o.txt")
-Exec(   echo("hello world") | sed('s/o/O/g') | sed("s/^\S*/bye/") > "log"     )
+Exec(echo("hello world") | sed("s/o/O/g") | sed("s/^\S*/bye/") > "log")
 print("Reading from o.txt")
-Exec(   cat < "o.txt"    )
-
+Exec(cat < "o.txt")
