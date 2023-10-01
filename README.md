@@ -47,15 +47,18 @@ $ python3 -m black src tests
 1. REDIRECTION
   - `cmd <t.txt >/dev/null 2>&1` becomes `cmd(i='t.txt', o=None, eo=1)`
 
-2. PIPE
+2. PIPES
   - `cmd | cmd`
 
-3. [TODO] Pain-free parallelism
+3. Session-based chdir
+  - You'll be no longer lost.
 
-4. [TODO] Expansion
+4. [TODO] Pain-free parallelism
+
+5. [TODO] Expansion
   - Command Substitution: `$(cmd)`
 
-5. [TODO] Bultins
+6. [TODO] Bultins
   - `export`
   - `&&`, `||` and `;`
 

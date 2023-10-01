@@ -28,7 +28,15 @@ def test_pipe_twice():
     assert res == "bye wOrld"
 
 
-def test_redirect(tmp_path):
+def test_redirect_capture(tmp_path):
+    # Capture and redirect works fine
+    assert Cap(echo("hello world"), o=None) == ""
+    assert Cap(echo("hello world"), o=tmp_path / "t.txt") == ""
+    # Does not capture stderr
+    assert Cap(ls_("/NonEXISTENT")) == ""
+
+
+def test_redirect_pipe(tmp_path):
     Run(echo("lorem ipsum"), stdout=tmp_path / "o0.log")
     assert (tmp_path / "o0.log").read_text() == "lorem ipsum\n"
     Run(echo("hello world") | sed("s/^\\S*/bye/"), o=tmp_path / "o.log")

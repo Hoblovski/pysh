@@ -101,6 +101,9 @@ class Command:
                             Use in combination with eo=1 to capture stderr.
     """
 
+    # TODO: kwargs validity check
+    #       o, stdout exclusive etc
+
     def __init__(self, *args: str, **kwargs: Any) -> None:
         self.args: list[str] = []
         self.kwargs: dict[str, Any] = {}
@@ -187,7 +190,7 @@ class Command:
         * input, timeout, strict, suppress
         """
         RUN_KEYS = ["timeout", "input", "strict"]
-        run_kwargs = project_dict(kwargs, RUN_KEYS)
+        run_kwargs = project_dict(kwargs, *RUN_KEYS)
         kwargs = dict(kv for kv in kwargs.items() if kv[0] not in RUN_KEYS)
         time_start = time.perf_counter()
         with self.popen(*args, **kwargs) as proc:
@@ -279,7 +282,7 @@ class Command:
                 continue
             match kwargs[kwname]:
                 case None | 0:
-                    res[resname] = None
+                    res[resname] = subprocess.DEVNULL
                 case subprocess.PIPE:
                     res[resname] = subprocess.PIPE
                 case str(s):

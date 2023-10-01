@@ -50,7 +50,8 @@ def Cap(cmd: str | Command, *args: str, **kwargs: Any) -> bytes | str:
     * for more check Run().
     """
     (strip,) = multipop_dict(kwargs, strip=True)
-    res = Run(cmd, *args, **{"stdout": subprocess.PIPE} | kwargs)
+    # kwargs takes precedence so that Cap works with redirects
+    res = Run(cmd, *args, **{"o": subprocess.PIPE} | kwargs)
     if strip:
         return res.stdout.strip()
     else:

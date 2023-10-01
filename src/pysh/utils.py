@@ -29,5 +29,5 @@ def multipop_dict(d: dict[str, Any], **kwargs: Any) -> list[Any]:
     return [d.pop(key, default) for key, default in kwargs.items()]
 
 
-def project_dict(d: dict[str, Any], *args) -> dict[str, Any]:
+def project_dict(d: dict[str, Any], *args: str) -> dict[str, Any]:
     return {k: v for k, v in d.items() if k in args}
