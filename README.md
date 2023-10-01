@@ -1,4 +1,6 @@
 # PyShell
+[![Test status](https://github.com/hoblovski/pysh/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/hoblovski/pysh/actions/workflows/test.yml)
+
 Less pain bash scripting: safer and more portable.
 
 Works on Python 3.11.
