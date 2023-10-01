@@ -13,5 +13,3 @@ def Exec(cmd: str | Command, *args: str, **kwargs: Any):
 def Exek(cmd):
     # TODO: exe and kapture. maybe use better name.
     pass
-
-

@@ -12,9 +12,8 @@ with almost the same syntax as in a shell script.
 The old good shell scripting has a bad name for readability, portability and
 error handling.  You can accidentally wipe out a file without noticing it.
 
-## EXAMPLE
-Check examples.
-
+## EXAMPLES
+Check examples/, and also tests/.
 
 # REFERENCE
 ## FEATURES

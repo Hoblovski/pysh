@@ -1,4 +1,4 @@
-from .pysh import *
+from pysh import *
 
 echo = Command("echo")
 cat = Command("cat")
@@ -9,6 +9,7 @@ z = sed("s/hellO/bye/g")
 Exec(x | y | z)
 
 print("Writing to o.log")
-Exec(echo("hello world") | sed("s/o/O/g") | sed("s/^\S*/bye/"), o="o.log")
+Exec(echo("hello world") | sed("s/o/O/g") | sed("s/^\\S*/bye/"), o="o.log")
 print("Reading from o.log")
 Exec(cat, "o.log")
+assert 0

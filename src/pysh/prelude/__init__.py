@@ -10,7 +10,7 @@ def predefine_command(*args):
 def predefine_command_alt(*args):
     """Define commands which a pysh-builtin alternative exists."""
     for arg in args:
-        globals()[arg + '_'] = Command(arg)
+        globals()[arg + "_"] = Command(arg)
 
 
 # See your most used commands with the command:
@@ -35,12 +35,12 @@ predefine_command(
 
 
 predefine_command_alt(
-        "ls",
-        "echo",
-        "cat",
-        "cp",
-        "mkdir",
-        "rm",
-        "mv",
-        "tee",
-        )
+    "ls",
+    "echo",
+    "cat",
+    "cp",
+    "mkdir",
+    "rm",
+    "mv",
+    "tee",
+)

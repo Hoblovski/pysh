@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def ensure_path(p: str | Path) -> Path:
     if isinstance(p, Path):
         return p
@@ -21,5 +22,3 @@ def timeout_to_seconds(x: int | str) -> int:
             return num * 60 * 60
         case _:
             raise ValueError(f"Unrecognized timeout {x}")
-
-

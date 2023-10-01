@@ -1,0 +1,5 @@
+[project]
+name = "PySh"
+version = "0.1"
+description = "Palliate you Shell headaches"
+requires-python = ">=3.11"
