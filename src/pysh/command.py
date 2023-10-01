@@ -14,8 +14,18 @@ class PyShError(Exception):
 
 
 class CommitResKind(Enum):
+    """
+    Value           Definition
+    ================================
+    SUCCESS         When the command returned zero.
+    FAILED          When the command returned non-zero value.
+    CRITICAL        When a Python exception is raised.
+    TIMEOUT         When the command timed out.
+    """
+
     SUCCESS = auto()
     FAILED = auto()
+    CRITICAL = auto()
     TIMEOUT = auto()
 
 
@@ -173,12 +183,11 @@ class Command:
     def commit(self, *args: str, **kwargs) -> CommitResult:
         """Commit the command to system and execute it.
 
-        kwargs:
-        * input: override as stdin data
-        * timeout: timeout. Default in seconds, but accepts [smh] suffices too.
+        kwargs: See Run()
+        * input, timeout, strict, suppress
         """
         RUN_KEYS = ["timeout", "input", "strict"]
-        run_kwargs = dict(kv for kv in kwargs.items() if kv[0] in RUN_KEYS)
+        run_kwargs = project_dict(kwargs, RUN_KEYS)
         kwargs = dict(kv for kv in kwargs.items() if kv[0] not in RUN_KEYS)
         time_start = time.perf_counter()
         with self.popen(*args, **kwargs) as proc:

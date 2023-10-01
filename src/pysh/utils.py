@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 
 def ensure_path(p: str | Path) -> Path:
@@ -22,3 +23,11 @@ def timeout_to_seconds(x: int | str) -> int:
             return num * 60 * 60
         case _:
             raise ValueError(f"Unrecognized timeout {x}")
+
+
+def multipop_dict(d: dict[str, Any], **kwargs: Any) -> list[Any]:
+    return [d.pop(key, default) for key, default in kwargs.items()]
+
+
+def project_dict(d: dict[str, Any], *args) -> dict[str, Any]:
+    return {k: v for k, v in d.items() if k in args}

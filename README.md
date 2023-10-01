@@ -1,13 +1,13 @@
 # PySh: Palliate you Shell headaches
 [![Test status](https://github.com/hoblovski/pysh/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/hoblovski/pysh/actions/workflows/test.yml)
 
-Less pain bash scripting: safer and more portable.
+Less pain bash scripting: readable, safe and powerful.
 
 Works on Python 3.11.
 
 ## OVERVIEW
-PyShell is a python library that allows users to write bash scripts in python,
-with almost the same syntax as in a shell script.
+PyShell is a python library that allows users to write bash scripts in python.
+Scripts are more readable. Errors are explicit. Parellelism is out-of-the-box.
 
 The old good shell scripting has a bad name for readability, portability and
 error handling.  You can accidentally wipe out a file without noticing it.

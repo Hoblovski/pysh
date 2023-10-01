@@ -2,7 +2,7 @@ from typing import Any
 import subprocess
 import copy
 
-from .command import Command, CommitResult
+from .command import Command, CommitResult, CommitResKind
 from .utils import *
 
 
@@ -17,15 +17,25 @@ def Run(cmd: str | Command, *args: str, **kwargs: Any) -> CommitResult:
       If true, non-zero return status or timeouts will be notified by to a
       CalledProcessError exception or TimeoutExpired exception.  Otherwise it is silently stored in the
       CommitResult.
+    * suppress: bool=False
+      ONLY ENABLE WHEN YOU KNOW WHAT YOU ARE DOING!
+      If true, suppress all python exceptions raised by the command.
+      Can cause bugs to go undetected, like mistyped commands.
     * timeout: int|str=None
       Timeout in seconds, or suffixed with [smh].
-    * stdin: str=None
+    * input: str=None
       Supplied stdin input.
     """
+    (suppress,) = multipop_dict(kwargs, suppress=False)
     if isinstance(cmd, str):
         cmd = Command(cmd)
     cmd = copy.deepcopy(cmd)
-    return cmd.commit(*args, **kwargs)
+    try:
+        return cmd.commit(*args, **kwargs)
+    except Exception as e:
+        if not suppress:
+            raise
+        return CommitResult(CommitResKind.CRITICAL, None, "", "", None)
 
 
 def Cap(cmd: str | Command, *args: str, **kwargs: Any) -> bytes | str:
@@ -39,9 +49,7 @@ def Cap(cmd: str | Command, *args: str, **kwargs: Any) -> bytes | str:
     * strip: bool=True
     * for more check Run().
     """
-    CAP_KEYS = ["strip"]
-    strip = kwargs.get("strip", True)
-    kwargs = dict(kv for kv in kwargs.items() if kv[0] not in CAP_KEYS)
+    (strip,) = multipop_dict(kwargs, strip=True)
     res = Run(cmd, *args, **{"stdout": subprocess.PIPE} | kwargs)
     if strip:
         return res.stdout.strip()

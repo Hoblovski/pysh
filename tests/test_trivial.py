@@ -44,7 +44,15 @@ def test_strict():
     with pytest.raises(PyShCommitError):
         Cap("yes", timeout=0.1, strict=True)
 
+
 def test_bool():
     assert Run("true")
     assert not Run("false")
     assert Run("ls", o=None)
+
+
+def test_suppress():
+    with pytest.raises(FileNotFoundError):
+        Run("CrAzY-NoNeXiStEnT-CoMmAnD")
+    res = Run("CrAzY-NoNeXiStEnT-CoMmAnD", suppress=True)
+    assert res.kind == CommitResKind.CRITICAL
