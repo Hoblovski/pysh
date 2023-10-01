@@ -261,7 +261,7 @@ class Command:
             res += [">", Command._redir2str(o)]
         if (e := self.kwargs.get("e", None)) is not None:
             res += ["2>", Command._redir2str(e)]
-        if (oe := self.kwargs.get("oe", None)) is not None:
+        if (eo := self.kwargs.get("eo", None)) is not None:
             res += ["2>&1"]
         if (capture := self.kwargs.get("capture", None)) is not None:
             res = ["$("] + res + [")"]
