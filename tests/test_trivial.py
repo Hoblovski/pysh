@@ -1,3 +1,5 @@
+import pytest
+
 from pysh import *
 
 echo = Command("echo")
@@ -34,10 +36,15 @@ def test_redirect(tmp_path):
     assert res == "bye world"
 
 
-# def test_strict():
-#    res = Run("flse"
-#
-#
-#
-# def test_if():
-#    #if grep
+def test_strict():
+    with pytest.raises(PyShCommitError):
+        Run("false", strict=True)
+    with pytest.raises(PyShCommitError):
+        Cap("false", strict=True)
+    with pytest.raises(PyShCommitError):
+        Cap("yes", timeout=0.1, strict=True)
+
+def test_bool():
+    assert Run("true")
+    assert not Run("false")
+    assert Run("ls", o=None)
