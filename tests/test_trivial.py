@@ -56,3 +56,22 @@ def test_suppress():
         Run("CrAzY-NoNeXiStEnT-CoMmAnD")
     res = Run("CrAzY-NoNeXiStEnT-CoMmAnD", suppress=True)
     assert res.kind == CommitResKind.CRITICAL
+
+
+def test_cd(tmp_path):
+    with ChDir(tmp_path):
+        Run(touch, "a")
+        Run(touch, "b")
+        assert sorted(Cap(ls_).splitlines()) == ["a", "b"]
+        Run(mkdir_, "c")
+        with ChDir("c"):
+            Run(touch, "d", "e")
+            assert sorted(Cap(ls_).splitlines()) == ["d", "e"]
+        assert sorted(Cap(find, ".").splitlines()) == [
+            ".",
+            "./a",
+            "./b",
+            "./c",
+            "./c/d",
+            "./c/e",
+        ]

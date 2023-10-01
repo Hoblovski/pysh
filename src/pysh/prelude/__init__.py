@@ -31,6 +31,7 @@ predefine_command(
     "sort",
     "tail",
     "vim",
+    "touch",
 )
 
 
