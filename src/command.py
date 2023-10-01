@@ -6,32 +6,7 @@ from enum import Enum, auto
 from typing import Self, TypeAlias, Any
 from pathlib import Path
 
-
-def ensure_path(p: str | Path) -> Path:
-    if isinstance(p, Path):
-        return p
-    if isinstance(p, str):
-        return Path(p)
-
-
-def timeout_to_seconds(x: int | str) -> int:
-    if isinstance(x, int):
-        return x
-    # TODO: Support 3m24s
-    num = int(x[:-1])
-    match x[-1].lower():
-        case "s":
-            return num
-        case "m":
-            return num * 60
-        case "h":
-            return num * 60 * 60
-        case _:
-            raise ValueError(f"Unrecognized timeout {x}")
-
-
-def join(d1: dict, d2: dict):
-    dict
+from .utils import *
 
 
 class CommitResKind(Enum):
@@ -221,30 +196,3 @@ class Command:
             res["stdin"] = kwargs["pipefrom"]
         # todo for pipes: kwargs["stdin"] = proc1.stdout
         return res
-
-
-def Exec(cmd: str | Command, *args: str, **kwargs: Any):
-    if isinstance(cmd, str):
-        cmd = Command(cmd)
-    cmd.commit(*args, **kwargs)
-
-
-def Exek(cmd):
-    # exe and kapture. maybe use better name.
-    pass
-
-
-echo = Command("echo")
-sed = Command("sed")
-tr = Command("tr")
-cat = Command("cat")
-
-x = echo("hello world")
-y = sed("s/o/O/g")
-z = sed("s/hellO/bye/g")
-Exec(x | y | z)
-
-print("Writing to o.log")
-Exec(echo("hello world") | sed("s/o/O/g") | sed("s/^\S*/bye/"), o="o.log")
-print("Reading from o.log")
-Exec(cat, "o.log")
