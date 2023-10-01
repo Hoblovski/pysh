@@ -1,193 +1,232 @@
-import pathlib
 import shutil
 import subprocess
 import copy
+import time
 from enum import Enum, auto
-from typing import Sequence, Union
+from typing import Self, TypeAlias, Any
+from pathlib import Path
 
 
-def ensure_path(p: Union[str, pathlib.Path]) -> pathlib.Path:
-    if isinstance(p, pathlib.Path):
+def ensure_path(p: str | Path) -> Path:
+    if isinstance(p, Path):
         return p
     if isinstance(p, str):
-        return pathlib.Path(p)
+        return Path(p)
 
 
-class RedirKind(Enum):
-    """Redirection kind for a specific descriptor.
-    A redirection is characterized by its kind and associated data, represented
-    as a tuple."""
+def timeout_to_seconds(x: int | str) -> int:
+    if isinstance(x, int):
+        return x
+    # TODO: Support 3m24s
+    num = int(x[:-1])
+    match x[-1].lower():
+        case "s":
+            return num
+        case "m":
+            return num * 60
+        case "h":
+            return num * 60 * 60
+        case _:
+            raise ValueError(f"Unrecognized timeout {x}")
 
-    NOREDIR = auto()
-    NULL = auto()
-    ERR2OUT = auto()
-    FILE = auto()
-    PIPE = auto()
-    CAPTURE = auto()
+
+def join(d1: dict, d2: dict):
+    dict
+
+
+class CommitResKind(Enum):
+    SUCCESS = auto()
+    FAILED = auto()
+    TIMEOUT = auto()
+
+
+# TODO: should be a dataclass
+class CommitResult:
+    def __init__(
+        self,
+        kind: CommitResKind,
+        retcode: None | int,
+        stdout: bytes | str = "",
+        stderr: bytes | str = "",
+        elapsed: float | None = None,
+    ) -> None:
+        self.kind = kind
+        self.retcode = retcode
+        self.stdout = stdout
+        self.stderr = stderr
+        self.elapsed = elapsed
+
+    def __bool__(self) -> bool:
+        return self.kind == CommitResKind.SUCCESS
 
 
 class Command:
-    def __init__(self, *args, **kwargs):
-        self.init_attr()
-        self.update_attr(*args, **kwargs)
+    """A command represents a bash command.
+    It can be created, edited (adding parameter or set redirection), pipelined.
+    It is NOT executed unless explicitly `commit`ed.
 
-    def init_attr(self):
-        self.args = []
-        self.stdin = (RedirKind.NOREDIR,)
-        self.stdout = (RedirKind.NOREDIR,)
-        self.stderr = (RedirKind.NOREDIR,)
-        self.pipefrom = None
+    NOTE while in principle we can override comparison operators for output redirection,
+    Python's chained comparisons lead to weird behaviour.
+    Python parses `f >o.txt <i.txt` as `f > o.txt and o.txt < i.txt`.
 
-    @staticmethod
-    def normalized_args(args, kwargs):
-        # TODO: special handle "2>&1" ">xx" in args.
-        # TODO: should we allow non-str in args, so we can echo(2)
-        return args, kwargs
+    Keyword arguments for self.kwargs:
+        REDIRECTION
+            Missing entries indicate that no redirection should happen.
 
-    def update_attr(self, *args, **kwargs):
-        """
-        type    **kwargs    meaning
-        ===========================
-        REDI-   (absence)  no redirect
-        RECT    i=          <
-                o=          >
-                o=None,     >/dev/null
-                o=0,        >/dev/null
-                e=          2>
-                a=          >>
-                oe=         2>&1 >
-                oe=1        2>&1
-                oe=0        2>&1 >/dev/null
-                oe=None     2>&1 >/dev/null
+            kwargs      meaning
+            ===================
+            i=path      <
+            o=path      >
+            e=path      >
+            a=path      >>
+            eo=1        2>&1
+            #TODO: ii=  <<<
+
+            Special paths:
+            * 0 and None    : indicate /dev/null
+
+            Constraints:
+            * o and a must not be present at the same time
+
+        PIPELINING
+            The operator `|` is supported for pipelining.
+
+            kwargs          meaning
+            ===================
+            pipefrom=cmd    self takes input from output of cmd i.e. cmd|self
+    """
+
+    def __init__(self, *args: str, **kwargs: Any) -> None:
+        self.args: list[str] = []
+        self.kwargs: dict[str, Any] = {}
+        self.update(*args, **kwargs)
+
+    def update(self, *args: str, **kwargs: Any) -> None:
+        """Augment the command.
+        Added parameters and options should be passed as `*args`.
+        Information related to invocation of the command (redirection etc) is passed in `**kwargs`, such as redirections.
         """
         args, kwargs = Command.normalized_args(args, kwargs)
         self.args += args
-        if "i" in kwargs:
-            assert False  # TODO
-        if "o" in kwargs:
-            assert False  # TODO
-        if "e" in kwargs:
-            assert False  # TODO
-        if "a" in kwargs:
-            assert False
-        if "oe" in kwargs:
-            assert False
+        self.kwargs.update(kwargs)
 
-    def subprocess_kwargs(self):
-        kwargs = {}
-        match self.stdout:
-            case RedirKind.NOREDIR:
-                kwargs["stdout"] = (None,)
-            case RedirKind.NULL:
-                kwargs["stdout"] = (subprocess.DEVNULL,)
-            case RedirKind.ERR2OUT:
-                assert False
-            case RedirKind.FILE, path:
-                kwargs["stdout"] = ensure_path(path).open("w")
-            case RedirKind.PIPE:
-                assert False
-            case RedirKind.CAPTURE:
-                assert False
-        match self.stderr:
-            case RedirKind.NOREDIR:
-                kwargs["stderr"] = (None,)
-            case RedirKind.NULL:
-                kwargs["stderr"] = (subprocess.DEVNULL,)
-            case RedirKind.ERR2OUT:
-                kwargs["stderr"] = (subprocess.STDOUT,)
-            case RedirKind.FILE, path:
-                kwargs["stderr"] = ensure_path(path).open("w")
-            case RedirKind.PIPE:
-                assert False
-            case RedirKind.CAPTURE:
-                assert False
-        match self.stdin:
-            case RedirKind.NOREDIR:
-                kwargs["stdin"] = (None,)
-            case RedirKind.NULL:
-                kwargs["stdin"] = (subprocess.DEVNULL,)
-            case RedirKind.ERR2OUT:
-                assert False
-            case RedirKind.FILE, path:
-                kwargs["stdin"] = ensure_path(path).open("r")
-            case RedirKind.PIPE:
-                assert False
-            case RedirKind.CAPTURE:
-                assert False
-        return kwargs
+    @staticmethod
+    def normalized_args(args, kwargs) -> tuple[Any, Any]:
+        # TODO: special handle "2>&1" ">xx" in args.
+        return args, kwargs
 
-    def popen(self, **kwargs):
-        if self.pipefrom is None:
-            return subprocess.Popen(self.args, **kwargs)
+    def popen(self, *args: str, **kwargs) -> subprocess.Popen:
+        """Get the popen object used for this command.
+        IMMEDIATELY spawns the process and starts execution.
+        """
+        self.update(*args, **kwargs)
+        if "pipefrom" not in self.kwargs:
+            # self is not pipelined (or is the very first of a pipeline)
+            kwargs = self.popen_kwargs()
+            proc = subprocess.Popen(self.args, **kwargs)
+            return proc
         else:
-            proc1 = self.pipefrom.popen(stdout=subprocess.PIPE)
-            kwargs["stdin"] = proc1.stdout
+            proc1 = self.kwargs["pipefrom"].popen(o=subprocess.PIPE)
+            kwargs = self.popen_kwargs(pipefrom=proc1.stdout)
             proc2 = subprocess.Popen(self.args, **kwargs)
-            proc1.stdout.close()
-            # This leaves proc1 unclosed, leaking.
-            # But it is fine.
+            proc1.stdout.close()  # required
             return proc2
 
-    def __call__(self, *args, **kwargs):
-        res = copy.deepcopy(self)
-        res.update_attr(*args, **kwargs)
-        return res
+    def commit(self, *args: str, **kwargs):
+        """Commit the command to system and execute it.
 
-    def __or__(self, cmd):
-        # Note: p1 | p2 return p2, henceforth losing any further updates to p1.
+        kwargs:
+        * input: override as stdin data
+        * timeout: timeout. Default in seconds, but accepts [smh] suffices too.
+        """
+        RUN_KEYS = ["timeout", "input"]
+        run_kwargs = dict(kv for kv in kwargs.items() if kv[0] in RUN_KEYS)
+        kwargs = dict(kv for kv in kwargs.items() if kv[0] not in RUN_KEYS)
+        time_start = time.perf_counter()
+        with self.popen(*args, **kwargs) as proc:
+            try:
+                timeout = run_kwargs.get("timeout", None)
+                input = run_kwargs.get("input", None)
+                stdout, stderr = proc.communicate(input=input, timeout=timeout)
+                elapsed = time.perf_counter() - time_start
+                retcode = proc.poll()
+                if retcode == 0:
+                    kind = CommitResKind.SUCCESS
+                else:
+                    kind = CommitResKind.FAILED
+                return CommitResult(
+                    kind, retcode, stdout=stdout, stderr=stderr, elapsed=elapsed
+                )
+            except subprocess.TimeoutExpired as exc:
+                elapsed = time.perf_counter() - time_start
+                kind = CommitResKind.TIMEOUT
+                retcode = proc.poll()
+                proc.kill()
+                proc.wait()
+                stdout = exc.output.decode() if exc.output is not None else ""
+                stderr = exc.stderr.decode() if exc.stderr is not None else ""
+                return CommitResult(
+                    kind, retcode, stdout=stdout, stderr=stderr, elapsed=elapsed
+                )
+            except Exception as exc:
+                proc.kill()
+                raise
+
+    def __call__(self, *args: str, **kwargs):
+        """Add new arguments and update options. Returns a new command without modifying self."""
+        new = copy.deepcopy(self)
+        new.update(*args, **kwargs)
+        return new
+
+    def __or__(self, cmd: Self) -> Self:
+        """Bash-like command pipelining."""
         if not isinstance(cmd, Command):
-            raise Exception(
-                "Pipelining only happen on process. Likely you missed a parenthesis."
-            )
-        cmd.pipefrom = self
+            raise TypeError(f"Expected a Command object for pipelining. Got {cmd}")
+        assert "pipefrom" not in cmd.kwargs
+        cmd.kwargs["pipefrom"] = self
         return cmd
 
     def __str__(self):
-        return " ".join(self.args)
+        raise NotImplementedError("TODO")
 
-    def Exec(self, execarg=None):
-        """Use == for command invocation.
-
-        Rationale:
-            Because __eq__ has the lowest precedence among custom-defineable operators.
-            Fuck! Python's got chained comparison...
-        """
-        kwargs = self.subprocess_kwargs()
-        with self.popen(**kwargs) as proc:
-            try:
-                stdout, stderr = proc.communicate()
-            except TimeoutExpired as exc:
-                proc.kill()
-                proc.wait()
-                raise
-            except:
-                proc.kill()
-                raise
-            retcode = proc.poll()
-            if retcode:
-                raise subprocess.CalledProcessError(
-                    retcode, proc.args, output=stdout, stderr=stderr
-                )
-
-    def __gt__(self, target):
-        # target: None for /dev/null, or str for file name
-        if target is None:
-            self.stdout = RedirKind.NULL
-        else:
-            self.stdout = RedirKind.FILE, target
-        return self
-
-    def __lt__(self, source):
-        # target: None for /dev/null, or str for file name
-        if source is None:
-            self.stdin = RedirKind.NULL
-        else:
-            self.stdin = RedirKind.FILE, source
-        return self
+    def popen_kwargs(self, **kwargs) -> dict[str, Any]:
+        """Interfacing python commands with system commands."""
+        res: dict[str, Any] = {}
+        kwargs = self.kwargs | kwargs
+        # HANDLE: a o e i
+        for kwname, resname, openflags in [
+            ("a", "stdout", "a"),
+            ("o", "stdout", "w"),
+            ("e", "stderr", "w"),
+            ("i", "stdin", "r"),
+        ]:
+            if kwname not in kwargs:
+                continue
+            match kwargs[kwname]:
+                case None | 0:
+                    res[resname] = None
+                case subprocess.PIPE:
+                    res[resname] = subprocess.PIPE
+                case str(s):
+                    res[resname] = open(s, openflags)  # TODO: close
+                case p if isinstance(p, Path):
+                    res[resname] = p.open(openflags)
+                case inv:
+                    raise ValueError(f'Invalid kwargs["{kwname}"]: {inv}')
+        # HANDLE: eo
+        if kwargs.get("eo", None) == 1:
+            res["stderr"] = subprocess.STDOUT
+        # HANDLE: pipefrom
+        if "pipefrom" in kwargs:
+            res["stdin"] = kwargs["pipefrom"]
+        # todo for pipes: kwargs["stdin"] = proc1.stdout
+        return res
 
 
-def Exec(cmd):
-    cmd.Exec()
+def Exec(cmd: str | Command, *args: str, **kwargs: Any):
+    if isinstance(cmd, str):
+        cmd = Command(cmd)
+    cmd.commit(*args, **kwargs)
 
 
 def Exek(cmd):
@@ -197,15 +236,15 @@ def Exek(cmd):
 
 echo = Command("echo")
 sed = Command("sed")
+tr = Command("tr")
 cat = Command("cat")
+
 x = echo("hello world")
 y = sed("s/o/O/g")
 z = sed("s/hellO/bye/g")
-# echo("hello world") > 'o.log'                                           ==()
-# echo("hello world") | sed('s/o/O/g')                                    ==()
+Exec(x | y | z)
 
-
-print("Writing to o.txt")
-Exec(echo("hello world") | sed("s/o/O/g") | sed("s/^\S*/bye/") > "log")
-print("Reading from o.txt")
-Exec(cat < "o.txt")
+print("Writing to o.log")
+Exec(echo("hello world") | sed("s/o/O/g") | sed("s/^\S*/bye/"), o="o.log")
+print("Reading from o.log")
+Exec(cat, "o.log")

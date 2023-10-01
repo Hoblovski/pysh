@@ -17,22 +17,19 @@ Check examples.
 # REFERENCE
 ## FEATURES
 1. REDIRECTION
-  - `>`, `>>`, `2>`, `<`
-  - Special shorthand for `/dev/null` and `2>&1`
+  - `cmd <t.txt >/dev/null 2>&1` becomes `cmd(i='t.txt', o=None, eo=1)`
 
 2. PIPE
+  - `cmd | cmd`
 
-3. Pain-free parallelism
+3. [TODO] Pain-free parallelism
 
-4. Expansion
+4. [TODO] Expansion
   - Command Substitution: `$(cmd)`
 
-5. Bultins
+5. [TODO] Bultins
   - `export`
   - `&&`, `||` and `;`
-
-## Idiom Change
-  - `source` -> `import`
 
 Support:
 ```
