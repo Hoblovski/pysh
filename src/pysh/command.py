@@ -132,6 +132,7 @@ class Command:
 
     @staticmethod
     def _normalized_args(args, kwargs) -> tuple[Any, Any]:
+        # TODO: check well-formedness
         # stdout, stderr, stdin are aliases to o, e, i
         if (i := kwargs.pop("stdin", None)) is not None:
             kwargs["i"] = i
@@ -292,8 +293,13 @@ class Command:
                 case inv:
                     raise ValueError(f'Invalid kwargs["{kwname}"]: {inv}')
         # HANDLE: eo
-        if kwargs.get("eo", None) == 1:
-            res["stderr"] = subprocess.STDOUT
+        if "eo" in kwargs:
+            match kwargs["eo"]:
+                case 0 | None:
+                    res["stdout"] = subprocess.DEVNULL
+                    res["stderr"] = subprocess.DEVNULL
+                case 1:
+                    res["stderr"] = subprocess.STDOUT
         if kwargs.get("capture", None) == 1:
             res["stdout"] = subprocess.PIPE
         # HANDLE: pipefrom

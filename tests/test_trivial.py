@@ -59,6 +59,69 @@ def test_bool():
     assert Run("ls", o=None)
 
 
+def test_redir_null(capfd):
+    cmd = ls_("/NonEXISTENT", ".")
+    res = Run(cmd)
+    stdout, stderr = capfd.readouterr()
+    assert stdout != "" and stderr != ""
+    res = Run(cmd, o=0)
+    stdout, stderr = capfd.readouterr()
+    assert stdout == "" and stderr != ""
+    res = Run(cmd, e=0)
+    stdout, stderr = capfd.readouterr()
+    assert stdout != "" and stderr == ""
+    res = Run(cmd, eo=0)
+    stdout, stderr = capfd.readouterr()
+    assert stdout == "" and stderr == ""
+    res = Run(cmd, eo=1)
+    stdout, stderr = capfd.readouterr()
+    assert stdout != "" and stderr == ""
+
+
+def test_capture_kwargs():
+    cmd = ls_("/NonEXISTENT", ".")
+    res = Run(cmd, capture=True)
+    stdout, stderr = res.stdout, res.stderr
+    assert stdout != "" and stderr != ""
+    res = Run(cmd, o=0, capture=True)
+    stdout, stderr = res.stdout, res.stderr
+    assert stdout == "" and stderr != ""
+    res = Run(cmd, e=0, capture=True)
+    stdout, stderr = res.stdout, res.stderr
+    assert stdout != "" and stderr == ""
+    res = Run(cmd, eo=0, capture=True)
+    stdout, stderr = res.stdout, res.stderr
+    assert stdout == "" and stderr == ""
+    res = Run(cmd, eo=1, capture=True)
+    stdout, stderr = res.stdout, res.stderr
+    assert stdout != "" and stderr == ""
+
+
+def test_cap(capfd):
+    # cap only captures stdout, while capture kwargs also captures stderr
+    cmd = ls_("/NonEXISTENT", ".")
+    res = Cap(cmd)
+    assert res != ""
+    stdout1, stderr1 = capfd.readouterr()
+    assert stdout1 == "" and stderr1 != ""
+    res = Cap(cmd, o=0)
+    assert res == ""
+    stdout1, stderr1 = capfd.readouterr()
+    assert stdout1 == "" and stderr1 != ""
+    res = Cap(cmd, e=0)
+    assert res != ""
+    stdout1, stderr1 = capfd.readouterr()
+    assert stdout1 == "" and stderr1 == ""
+    res = Cap(cmd, eo=0)
+    assert res == ""
+    stdout1, stderr1 = capfd.readouterr()
+    assert stdout1 == "" and stderr1 == ""
+    res = Cap(cmd, eo=1)
+    assert res != ""
+    stdout1, stderr1 = capfd.readouterr()
+    assert stdout1 == "" and stderr1 == ""
+
+
 def test_suppress():
     with pytest.raises(FileNotFoundError):
         Run("CrAzY-NoNeXiStEnT-CoMmAnD")
