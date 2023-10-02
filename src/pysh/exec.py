@@ -43,7 +43,7 @@ def Run(cmd: str | Command, *args: str, **kwargs: Any) -> CommitResult:
         return CommitResult(CommitResKind.CRITICAL, None, "", "", None)
 
 
-def Cap(cmd: str | Command, *args: str, **kwargs: Any) -> bytes | str:
+def Cap(cmd: str | Command, *args: str, **kwargs: Any) -> str:
     """Executes the command with the arguments and captures stdout.
     Different from the capture kwargs, which additionally captures stderr.
 
@@ -62,7 +62,10 @@ def Cap(cmd: str | Command, *args: str, **kwargs: Any) -> bytes | str:
     (strip,) = multipop_dict(kwargs, strip=True)
     # kwargs takes precedence so that Cap works with redirects
     res = Run(cmd, *args, **{"o": subprocess.PIPE} | kwargs)
+    stdout = res.stdout
+    if isinstance(stdout, bytes):
+        raise ValueError(f"You can only capture text stdout with Cap(), but got bytes.")
     if strip:
-        return res.stdout.strip()
+        return stdout.strip()
     else:
-        return res.stdout
+        return stdout

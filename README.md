@@ -91,7 +91,7 @@ if Run(ls_):
 * parallelism similar to GNU parallel, maybe use async await
 * builtin xargs maybe?
 * quick pathlib.Path conversion to save keystrokes
-
+* binary I/O with Run.retval
 
 # For developers
 To allow tests to find PySh while developing it, execute

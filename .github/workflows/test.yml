@@ -14,8 +14,8 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pip install -e .
       - name: "Code format check."
-        run: python3 -m black --check src
+        run: python3 -m black --check .
       - name: "Typing check."
-        run: python3 -m mypy src
+        run: python3 -m mypy .
       - name: "Unit tests."
         run: python3 -m pytest
