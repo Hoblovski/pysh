@@ -3,7 +3,7 @@ name: Test CI
 on: [push, pull_request]
 
 jobs:
-  format-test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
