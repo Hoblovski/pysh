@@ -1,28 +1,97 @@
 # PySh: Palliate you Shell headaches
 [![Test status](https://github.com/hoblovski/pysh/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/hoblovski/pysh/actions/workflows/test.yml)
 
-Less pain bash scripting: readable, safe and powerful.
+Readable, safe and powerful shell scripting in Python.
 
 Works on Python 3.11.
 
 ## OVERVIEW
 PyShell is a python library that allows users to write bash scripts in python.
 Scripts are more readable. Errors are explicit. Parellelism is out-of-the-box.
+PyShell is well-documented, well-tested and type-annotated.
 
 The old good shell scripting has a bad name for readability, portability and
 error handling.  You can accidentally wipe out a file without noticing it.
-Every time you have to check the manual for the syntax for array and
-associative array manipulation.  The procedures compose badly.  Debugging bash
-scripts is pain.
-
-## EXAMPLES
-Check examples/, and also tests/.
+Every time you have to check the manual for the syntax of arrays and
+associative arrays.  The procedures compose badly. Missing arguments are
+defaulted to empty.  You do not know which commands mutate the disk and system
+configurations and which do not. Debugging bash scripts is pain.
 
 ## SETUP
-* Install all requirements `python3 -m pip install -r requirements.txt`
+[WIP: upload to pypi]
 
-## USAGE
-* PySh scripts
+Clone the repo and install manually
+```
+python3 -m pip install -r requirements.txt
+python3 -m pip install .
+```
+
+
+# USAGE
+For real scripts, check examples/ and tests/.
+
+Basic usage:
+```python
+from pysh import *
+
+# Run a command
+Run(echo_, "Hello world")  # prints: Hello world
+
+# Command alias
+greet = echo_("Hello world")  # not executed until Run
+Run(greet)
+
+# Extending a command
+greet_tom = greet("tom")
+Run(greet_tom)  # prints: Hello World tom
+
+# I/O redirection
+Run(greet, o="greeting.txt")  # same as `echo "Hello world" >greeting.txt`
+Run(sed, "s/Hello/Hola/", i="greeting.txt")  # prints: Hola world
+lserr = ls_("-1", ".", "/NONEXIST")  # alias to a command with both stdout
+Run(lserr, o="ls.txt", eo=1)  # Same as `ls -1 . NONEXIST >ls.txt 2>&1`
+
+# Creating a command from scratch
+count_chars = Command("wc", "-c")
+
+# Using pipes
+Run(greet | sed("s/ll/l/") | count_chars)  # prints: 11 (including \n)
+
+# Builtin time
+Run("seq", "10000000", eo=0).elapsed  # returns: 0.064 (seconds)
+
+# Capture stdout, just like $(cmd)
+res = Cap(lserr)  # stderr not captured
+print(res)  # prints: .:\nexamples\ngreeting.txt\n...
+
+# Capture both stdout and stderr
+res = Run(lserr, capture=True)  # prints: nothing
+print(res.stdout, res.stderr)
+
+# Session-based cd
+with ChDir("/"):
+    Run(ls_)  # lists root directory
+Run(ls_)  # lists current directory
+
+# Check return vlaues
+if not Run(lserr):
+    print("lserr failed")  # prints: lserr failed
+if Run(ls_):
+    print("ls succeeded")  # prints: ls succeeded
+```
+
+# TODO
+* upload to pypi with a better name maybe Psyche
+* serialize command into string representation
+* fix TODO in sources
+* exporting environment variables
+* control operator `&&`, `||`, `;`
+* command groups and subshells
+* restricted shell
+* parallelism similar to GNU parallel, maybe use async await
+* builtin xargs maybe?
+* quick pathlib.Path conversion to save keystrokes
+
 
 # For developers
 To allow tests to find PySh while developing it, execute
@@ -41,36 +110,3 @@ When you are contributing, make sure the code is well formatted
 $ python3 -m black src tests
 ```
 
-# REFERENCE
-[WIP]
-## FEATURES
-1. REDIRECTION
-  - `cmd <t.txt >/dev/null 2>&1` becomes `cmd(i='t.txt', o=None, eo=1)`
-
-2. PIPES
-  - `cmd | cmd`
-
-3. Session-based chdir
-  - You'll be no longer lost.
-
-4. [TODO] Pain-free parallelism
-
-5. [TODO] Expansion
-  - Command Substitution: `$(cmd)`
-
-6. [TODO] Bultins
-  - `export`
-  - `&&`, `||` and `;`
-
-Support:
-```
-if grep -q x:
-popd?pushd?
-restricted shell for safety?
-quick conversion to Path to avoid all pathlib.Path gibberish
-```
-
-# TODO
-* fix TODO in sources
-* fix examples/
-* better motivating example in README

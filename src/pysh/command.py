@@ -7,10 +7,7 @@ from typing import Self, TypeAlias, Any
 from pathlib import Path
 
 from .utils import *
-
-
-class PyShError(Exception):
-    pass
+from .errors import *
 
 
 class CommitResKind(Enum):
@@ -47,11 +44,6 @@ class CommitResult:
 
     def __bool__(self) -> bool:
         return self.kind == CommitResKind.SUCCESS
-
-
-class PyShCommitError(PyShError):
-    def __init__(self, res: CommitResult) -> None:
-        self.res = res
 
 
 class Command:
