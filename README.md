@@ -48,7 +48,7 @@ Run(greet_tom)  # prints: Hello World tom
 # I/O redirection
 Run(greet, o="greeting.txt")  # same as `echo "Hello world" >greeting.txt`
 Run(sed, "s/Hello/Hola/", i="greeting.txt")  # prints: Hola world
-lserr = ls_("-1", ".", "/NONEXIST")  # alias to a command with both stdout
+lserr = ls_("-1", ".", "/NONEXIST")  # a command with both stdout and stderr
 Run(lserr, o="ls.txt", eo=1)  # Same as `ls -1 . NONEXIST >ls.txt 2>&1`
 
 # Creating a command from scratch
@@ -74,9 +74,9 @@ with ChDir("/"):
 Run(ls_)  # lists current directory
 
 # Check return vlaues
-if not Run(lserr):
+if not Run(lserr, oe=0):
     print("lserr failed")  # prints: lserr failed
-if Run(ls_):
+if Run(ls_, oe=0):
     print("ls succeeded")  # prints: ls succeeded
 ```
 
