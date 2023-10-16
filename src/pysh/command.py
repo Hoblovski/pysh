@@ -297,5 +297,8 @@ class Command:
         # HANDLE: pipefrom
         if "pipefrom" in kwargs:
             res["stdin"] = kwargs["pipefrom"]
-        # todo for pipes: kwargs["stdin"] = proc1.stdout
+        # HANDLE: cwd
+        if "cwd" in kwargs:
+            res["cwd"] = Path(kwargs["cwd"])
+            assert res["cwd"].is_dir()
         return res

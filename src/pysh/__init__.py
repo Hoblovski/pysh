@@ -31,6 +31,7 @@ from .prelude import (
 
 # version check
 import sys
+
 if sys.version_info < (3, 11):
-    print(f'Pysh runs on python >= 3.11. Got:\n{sys.version}', file=sys.stderr)
+    print(f"Pysh runs on python >= 3.11. Got:\n{sys.version}", file=sys.stderr)
     exit(1)

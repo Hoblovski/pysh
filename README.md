@@ -5,17 +5,21 @@ Readable, safe and powerful shell scripting in Python.
 
 Works on Python 3.11.
 
-## OVERVIEW
-PyShell is a python library that allows users to write bash scripts in python.
-Scripts are more readable. Errors are explicit. Parellelism is out-of-the-box.
-PyShell is well-documented, well-tested and type-annotated.
-
+## MOTIVATION
 The old good shell scripting has a bad name for readability, portability and
 error handling.  You can accidentally wipe out a file without noticing it.
 Every time you have to check the manual for the syntax of arrays and
 associative arrays.  The procedures compose badly. Missing arguments are
 defaulted to empty.  You do not know which commands mutate the disk and system
 configurations and which do not. Debugging bash scripts is pain.
+
+## OVERVIEW
+PySh is a python library that allows users to write bash scripts in python.
+Scripts are more readable. Errors are explicit. Parellelism is out-of-the-box.
+PySh is well-documented, well-tested and type-annotated.
+
+PySh is 100% compatible with Python and Python libraries. Everything in PySh is
+also valid Python, because PySh is simply a shallow embedding DSL in Python.
 
 ## SETUP
 [WIP: upload to pypi]
@@ -32,6 +36,7 @@ For real scripts, check examples/ and tests/.
 
 Basic usage:
 ```python
+#!/usr/bin/env python3
 from pysh import *
 
 # Run a command
