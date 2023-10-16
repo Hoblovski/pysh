@@ -82,6 +82,7 @@ if Run(ls_, oe=0):
 
 # TODO
 * upload to pypi with a better name maybe Psyche
+* a better way to help indicate the CWD
 * serialize command into string representation
 * fix TODO in sources
 * exporting environment variables
